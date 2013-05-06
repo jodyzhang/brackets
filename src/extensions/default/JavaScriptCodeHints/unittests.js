@@ -469,45 +469,45 @@ define(function (require, exports, module) {
             });
 
             it("should close hints only when move off the end of a property ", function () {
-                testEditor.setCursorPos({ line: 17, ch: 11 });
+                testEditor.setCursorPos({ line: 15, ch: 11 });
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 17, ch: 12 }, false);
+                    { line: 15, ch: 12 }, false);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 17, ch: 13 }, false);
+                    { line: 15, ch: 13 }, false);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 17, ch: 14 }, false);
+                    { line: 15, ch: 14 }, false);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 17, ch: 15 }, false);
+                    { line: 15, ch: 15 }, false);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 17, ch: 16 }, false);
+                    { line: 15, ch: 16 }, false);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 17, ch: 17 }, true);
+                    { line: 15, ch: 17 }, true);
             });
 
             it("should close hints only when move off the beginning of an identifier ", function () {
-                testEditor.setCursorPos({ line: 17, ch: 10 });
+                testEditor.setCursorPos({ line: 15, ch: 10 });
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 17, ch: 9 }, false);
+                    { line: 15, ch: 9 }, false);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 17, ch: 8 }, false);
+                    { line: 15, ch: 8 }, false);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 17, ch: 7 }, true);
+                    { line: 15, ch: 7 }, true);
             });
 
             it("should close hints only when move off the beginning of a keyword ", function () {
-                testEditor.setCursorPos({ line: 24, ch: 7 });
+                testEditor.setCursorPos({ line: 22, ch: 7 });
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 hintsPresent(hintObj, ["var"]);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 24, ch: 6 }, false);
+                    { line: 22, ch: 6 }, false);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 24, ch: 5 }, false);
+                    { line: 22, ch: 5 }, false);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 24, ch: 4 }, false);
+                    { line: 22, ch: 4 }, false);
                 expectCloseHints(JSCodeHints.jsHintProvider, hintObj,
-                    { line: 24, ch: 3 }, true);
+                    { line: 22, ch: 3 }, true);
             });
 
             it("should NOT list implicit hints on left-brace", function () {
@@ -690,7 +690,192 @@ define(function (require, exports, module) {
                     hintsPresentOrdered(hintObj, ["charAt", "charCodeAt", "concat", "indexOf"]);
                 });
             });
+            // investigate the issue, related to first argument is ? type
+            xit("should list function type", function () {
+                var start = { line: 34, ch: 0 },
+                    middle = { line: 34, ch: 5 };
+                
+                testDoc.replaceRange("funD(", start, start);
+                testEditor.setCursorPos(middle);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["funD(a: string, b: number) -> {x, y}"]);
+                });
+            });
 
+            it("should list exports from a requirejs module", function () {
+                var start = { line: 36, ch: 21 };
+                
+                testEditor.setCursorPos(start);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["a", "b", "j"]);
+                });
+            });
+            it("should list later defined property names", function () {
+                var start = { line: 15, ch: 11 };
+                
+                testEditor.setCursorPos(start);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["foo", "propB"]);
+                });
+            });
+            
+            it("should list matching property names", function () {
+                var start = { line: 10, ch: 10 };
+                
+                testDoc.replaceRange("param", start, start);
+                testEditor.setCursorPos(start);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["paramB1", "paramB2"]);
+                });
+            });
+ 
+            it("should take anotation parameter type:String", function () {
+                var start = { line: 34, ch: 21 };
+                
+                testDoc.replaceRange("var k= funD(10,11).x.", start, start);
+                testEditor.setCursorPos(start);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentOrdered(hintObj, ["charAt", "charCodeAt", "concat", "indexOf"]);
+                });
+            });
+
+            it("should take anotation parameter type:Number", function () {
+                var start = { line: 34, ch: 21 };
+                
+                testDoc.replaceRange("var k= funD(10,11).y.", start, start);
+                testEditor.setCursorPos(start);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentOrdered(hintObj, ["toExponential", "toFixed", "toString"]);
+                });
+            });
+     
+            it("should add new method on String .prototype", function () {
+                var start = { line: 34, ch: 0 };
+                var testPos = { line: 37, ch: 12 };
+                testDoc.replaceRange("String.prototype.times = function (count) {\n" + "\treturn count < 1 ? '' : new Array[count + 1].join(this);\n};\n\"hello\".time", start, start);
+                testEditor.setCursorPos(testPos);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentOrdered(hintObj, ["times", "trimLeft"]);
+                });
+            });
+
+            it("should list function defined from .prototype", function () {
+                var start = { line: 52, ch: 0 },
+                    testPos1 = { line: 52, ch: 5 };
+                    
+                testEditor.setCursorPos(testPos1);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["calc"]);
+                });
+                
+            });
+
+            it("should list function type defined from .prototype", function () {
+                var start = { line: 52, ch: 10 };
+                testEditor.setCursorPos(start);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["calc(a4: number, b4: number) -> number"]);
+                });
+            });
+            // investigate the order 
+            it("should list function inhertated from super class", function () {
+                var start = { line: 69, ch: 11 };
+                testEditor.setCursorPos(start);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["amountDue", "getAmountDue", "getName", "name", "setAmountDue"]);
+                });
+            });
+ 
+            it("should show argument from from .prototype.Method", function () {
+                var start = { line: 67, ch: 0 },
+                    testPos1 = { line: 67, ch: 24 };
+                
+                testDoc.replaceRange("myCustomer.setAmountDue(", start);
+                testEditor.setCursorPos(testPos1);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentOrdered(hintObj, ["setAmountDue(amountDue: ?)"]);
+                });
+            });
+            
+            it("should show guessed argument type from current passing parameter", function () {
+                var start = { line: 67, ch: 0 },
+                    testPos1 = { line: 67, ch: 24 };
+                
+                testDoc.replaceRange("myCustomer.setAmountDue(10)", start);
+                testEditor.setCursorPos(testPos1);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentOrdered(hintObj, ["setAmountDue(amountDue: number)"]);
+                });
+            });
+            
+            it("should show inner function type", function () {
+                var testPos = { line: 83, ch: 23 };
+                
+                testEditor.setCursorPos(testPos);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentOrdered(hintObj, ["innerFunc(arg: string) -> {t}"]);
+                });
+            });
+            
+            it("should show type for inner function returned function", function () {
+                var testPos = { line: 83, ch: 33 };
+                
+                testEditor.setCursorPos(testPos);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentOrdered(hintObj, ["t() -> string"]);
+                });
+                
+            });
+            
+            // parameter type anotation tests, due to another bug: first argument has ? 
+            xit("should list parameter Date,boolean type", function () {
+                var start = { line: 97, ch: 0 },
+                    testPos = { line: 97, ch: 11 };
+                
+                testDoc.replaceRange("funTypeAn1(", start);
+                testEditor.setCursorPos(testPos);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["funTypeAn1((a: bool, b: Date) -> {x, y}"]);
+                });
+            });
+            
+            // parameter type anotation tests, due to another bug: first argument has ? 
+            xit("should list parameter function type and best guess for its argument/return types", function () {
+                var testPos = { line: 107, ch: 11 };
+                
+                testEditor.setCursorPos(testPos);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["funFuncArg(f: fn() -> number) -> number"]);
+                });
+            });
+
+            // parameter type anotation tests
+            it("should list parameter function type and best guess for function call/return types", function () {
+                var testPos = { line: 119, ch: 12 };
+                
+                testEditor.setCursorPos(testPos);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["funFunc2Arg(f: fn(s: string, n: number) -> string) -> string"]);
+                });
+            });
+                        
             it("should list function type", function () {
                 var start = { line: 36, ch: 0 },
                     middle = { line: 36, ch: 5 };
@@ -704,7 +889,7 @@ define(function (require, exports, module) {
             });
 
             it("should list exports from a requirejs module", function () {
-                var start = { line: 40, ch: 21 };
+                var start = { line: 36, ch: 21 };
                 
                 testEditor.setCursorPos(start);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
@@ -712,9 +897,8 @@ define(function (require, exports, module) {
                     hintsPresentExact(hintObj, ["a", "b", "j"]);
                 });
             });
-
             it("should jump to function", function () {
-                var start = { line: 43, ch: 0 };
+                var start = { line: 39, ch: 0 };
                 
                 testEditor.setCursorPos(start);
                 runs(function () {
@@ -723,18 +907,77 @@ define(function (require, exports, module) {
             });
 
             it("should jump to var", function () {
-                var start = { line: 44, ch: 10 };
+                var start = { line: 41, ch: 10 };
                 
                 testEditor.setCursorPos(start);
                 runs(function () {
                     editorJumped({line: 3, ch: 6});
                 });
             });
+            it("should jump to closure, early defined var", function () {
+                var start = { line: 17, ch: 9 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 8, ch: 10});
+                });
+            });
+            // bug: the issue: timeout, 
+            /*  following doesn't handle failed case, also mocked up editor: CommandManger initialized ok?
+                CommandManager.execute(Commands.FILE_OPEN, {fullPath: resolvedPath})
+                                    .done(function () {
+                                        session.editor.setSelection(jumpResp.start, jumpResp.end, true);
+                                    });
+            */
+            it("should jump to the definition in new module file", function () {
+                var start = { line: 38, ch: 21 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 4, ch: 34}); //jump to another file
+                });
+            });
+            
+            it("should jump to the method definition in .prototype", function () {
+                var start = { line: 52, ch: 8 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 49, ch: 1}); //jump to prototype.calc
+                });
+            });
 
+            it("should jump to parameter passed in the method", function () {
+                var start = { line: 55, ch: 20 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 54, ch: 27});
+                });
+            });
+            
+            it("should jump to parameter passed in anonymous method", function () {
+                var start = { line: 72, ch: 25 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 71, ch: 53});
+                });
+            });
+            
+            it("should jump to inner method", function () {
+                var start = { line: 83, ch: 32 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 81, ch: 45});
+                });
+            });
+            
             it("should insert hint as [\"my-key\"] since 'my-key' is not a valid property name", function () {
-                var start = { line: 49, ch: 0 },
-                    middle = { line: 49, ch: 5 },
-                    end = { line: 49, ch: 13 };
+                var start = { line: 45, ch: 0 },
+                    middle = { line: 45, ch: 5 },
+                    end = { line: 45, ch: 13 };
                 
                 testDoc.replaceRange("arr.m", start, start);
                 testEditor.setCursorPos(middle);
@@ -748,9 +991,9 @@ define(function (require, exports, module) {
             });
 
             it("should insert hint as [\"my-key\"] make sure this works if nothing is typed after the '.'", function () {
-                var start = { line: 49, ch: 0 },
-                    middle = { line: 49, ch: 4 },
-                    end = { line: 49, ch: 13 };
+                var start = { line: 45, ch: 0 },
+                    middle = { line: 45, ch: 4 },
+                    end = { line: 45, ch: 13 };
                 
                 testDoc.replaceRange("arr.", start, start);
                 testEditor.setCursorPos(middle);
@@ -764,9 +1007,9 @@ define(function (require, exports, module) {
             });
 
             it("should insert hint as '.for' since keywords can be used as property names", function () {
-                var start = { line: 49, ch: 0 },
-                    middle = { line: 49, ch: 5 },
-                    end = { line: 49, ch: 7 };
+                var start = { line: 45, ch: 0 },
+                    middle = { line: 45, ch: 5 },
+                    end = { line: 45, ch: 7 };
                 
                 testDoc.replaceRange("arr.f", start, start);
                 testEditor.setCursorPos(middle);
