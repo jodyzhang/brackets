@@ -690,7 +690,7 @@ define(function (require, exports, module) {
                     hintsPresentOrdered(hintObj, ["charAt", "charCodeAt", "concat", "indexOf"]);
                 });
             });
-            // investigate the issue, related to first argument is ? type
+            // investigate the issue, related to first argument is ? type #3670
             xit("should list function type", function () {
                 var start = { line: 34, ch: 0 },
                     middle = { line: 34, ch: 5 };
@@ -758,6 +758,7 @@ define(function (require, exports, module) {
             it("should add new method on String .prototype", function () {
                 var start = { line: 34, ch: 0 };
                 var testPos = { line: 37, ch: 12 };
+                
                 testDoc.replaceRange("String.prototype.times = function (count) {\n" + "\treturn count < 1 ? '' : new Array[count + 1].join(this);\n};\n\"hello\".time", start, start);
                 testEditor.setCursorPos(testPos);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
@@ -768,9 +769,9 @@ define(function (require, exports, module) {
 
             it("should list function defined from .prototype", function () {
                 var start = { line: 52, ch: 0 },
-                    testPos1 = { line: 52, ch: 5 };
+                    testPos = { line: 52, ch: 5 };
                     
-                testEditor.setCursorPos(testPos1);
+                testEditor.setCursorPos(testPos);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 runs(function () {
                     hintsPresentExact(hintObj, ["calc"]);
@@ -780,28 +781,30 @@ define(function (require, exports, module) {
 
             it("should list function type defined from .prototype", function () {
                 var start = { line: 52, ch: 10 };
+                
                 testEditor.setCursorPos(start);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 runs(function () {
                     hintsPresentExact(hintObj, ["calc(a4: number, b4: number) -> number"]);
                 });
             });
-            // investigate the order 
-            xit("should list function inhertated from super class", function () {
+            
+            it("should list function inhertated from super class", function () {
                 var start = { line: 69, ch: 11 };
+                
                 testEditor.setCursorPos(start);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 runs(function () {
-                    hintsPresentExact(hintObj, ["amountDue", "getAmountDue", "getName", "name", "setAmountDue"]);
+                    hintsPresentExact(hintObj, ["getAmountDue", "getName", "name", "setAmountDue"]);
                 });
             });
  
             it("should show argument from from .prototype.Method", function () {
                 var start = { line: 67, ch: 0 },
-                    testPos1 = { line: 67, ch: 24 };
+                    testPos = { line: 67, ch: 24 };
                 
                 testDoc.replaceRange("myCustomer.setAmountDue(", start);
-                testEditor.setCursorPos(testPos1);
+                testEditor.setCursorPos(testPos);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 runs(function () {
                     hintsPresentOrdered(hintObj, ["setAmountDue(amountDue: ?)"]);
@@ -810,10 +813,10 @@ define(function (require, exports, module) {
             
             it("should show guessed argument type from current passing parameter", function () {
                 var start = { line: 67, ch: 0 },
-                    testPos1 = { line: 67, ch: 24 };
+                    testPos = { line: 67, ch: 24 };
                 
                 testDoc.replaceRange("myCustomer.setAmountDue(10)", start);
-                testEditor.setCursorPos(testPos1);
+                testEditor.setCursorPos(testPos);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 runs(function () {
                     hintsPresentOrdered(hintObj, ["setAmountDue(amountDue: number)"]);
@@ -841,8 +844,8 @@ define(function (require, exports, module) {
                 
             });
             
-            // parameter type anotation tests, due to another bug: first argument has ? 
-            xit("should list parameter Date,boolean type", function () {
+            // parameter type anotation tests, due to another bug: first argument has ? #3670
+            xit("should list parameter Date, boolean type", function () {
                 var start = { line: 97, ch: 0 },
                     testPos = { line: 97, ch: 11 };
                 
@@ -854,7 +857,7 @@ define(function (require, exports, module) {
                 });
             });
             
-            // parameter type anotation tests, due to another bug: first argument has ? 
+            // parameter type anotation tests, due to another bug: first argument has ? #3670
             xit("should list parameter function type and best guess for its argument/return types", function () {
                 var testPos = { line: 107, ch: 11 };
                 
@@ -866,7 +869,7 @@ define(function (require, exports, module) {
             });
 
             // parameter type anotation tests
-            it("should list parameter function type and best guess for function call/return types", function () {
+            it("should list type for function parameter and best guess for function call/return types", function () {
                 var testPos = { line: 119, ch: 12 };
                 
                 testEditor.setCursorPos(testPos);
@@ -875,7 +878,7 @@ define(function (require, exports, module) {
                     hintsPresentExact(hintObj, ["funFunc2Arg(f: fn(s: string, n: number) -> string) -> string"]);
                 });
             });
-            // investigate type for first param, related to bug first argument type is ?            
+            // investigate type for first param, related to bug first argument type is ? #3670         
             xit("should list function type", function () {
                 var start = { line: 36, ch: 0 },
                     middle = { line: 36, ch: 5 };
@@ -922,13 +925,7 @@ define(function (require, exports, module) {
                     editorJumped({line: 8, ch: 10});
                 });
             });
-            // bug: the issue: timeout, 
-            /*  following doesn't handle failed case, also mocked up editor: CommandManger initialized ok?
-                CommandManager.execute(Commands.FILE_OPEN, {fullPath: resolvedPath})
-                                    .done(function () {
-                                        session.editor.setSelection(jumpResp.start, jumpResp.end, true);
-                                    });
-            */
+            // bug: the issue: timeout, due to Commands has no open command found
             xit("should jump to the definition in new module file", function () {
                 var start = { line: 38, ch: 21 };
                 
