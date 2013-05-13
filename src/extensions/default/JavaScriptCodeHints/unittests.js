@@ -57,7 +57,7 @@ define(function (require, exports, module) {
         
         // create Editor instance
         var editor = new Editor(doc, true, $editorHolder.get(0));
-        
+        EditorManager._notifyActiveEditorChanged(editor); //add the editor to EditorManager
         return editor;
     }
 
@@ -289,13 +289,15 @@ define(function (require, exports, module) {
          * @param {Function} callback - the callback to apply once the editor has changed position
          */
         function _waitForJump(oldLocation, callback) {
+            var cursor = null;
             waitsFor(function () {
-                var cursor = testEditor.getCursorPos();
+                var activeEditor = EditorManager.getActiveEditor();
+                cursor = activeEditor.getCursorPos();
                 return (cursor.line !== oldLocation.line) ||
                         (cursor.ch !== oldLocation.ch);
             }, "Expected jump did not occur", 3000);
 
-            runs(function () { callback(testEditor.getCursorPos()); });
+            runs(function () { callback(cursor); });
         }
         
         /**
@@ -973,8 +975,8 @@ define(function (require, exports, module) {
             });
             
             // bug: the issue: timeout due to file.open command not found
-            xit("should jump to the definition in new module file", function () {
-                var start = { line: 38, ch: 21 };
+            it("should jump to the definition in new module file", function () {
+                var start = { line: 40, ch: 22 };
                 
                 testEditor.setCursorPos(start);
                 runs(function () {

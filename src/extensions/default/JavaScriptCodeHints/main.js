@@ -27,22 +27,24 @@
 define(function (require, exports, module) {
     "use strict";
 
-    var CodeHintManager = brackets.getModule("editor/CodeHintManager"),
-        EditorManager   = brackets.getModule("editor/EditorManager"),
-        DocumentManager = brackets.getModule("document/DocumentManager"),
-        Commands        = brackets.getModule("command/Commands"),
-        CommandManager  = brackets.getModule("command/CommandManager"),
-        Menus           = brackets.getModule("command/Menus"),
-        Strings         = brackets.getModule("strings"),
-        AppInit         = brackets.getModule("utils/AppInit"),
-        ExtensionUtils  = brackets.getModule("utils/ExtensionUtils"),
-        StringUtils     = brackets.getModule("utils/StringUtils"),
-        StringMatch     = brackets.getModule("utils/StringMatch"),
-        LanguageManager = brackets.getModule("language/LanguageManager"),
-        HintUtils       = require("HintUtils"),
-        ScopeManager    = require("ScopeManager"),
-        Session         = require("Session"),
-        Acorn           = require("thirdparty/acorn/acorn");
+    var CodeHintManager  = brackets.getModule("editor/CodeHintManager"),
+        EditorManager    = brackets.getModule("editor/EditorManager"),
+        DocumentManager  = brackets.getModule("document/DocumentManager"),
+        Commands         = brackets.getModule("command/Commands"),
+        CommandManager   = brackets.getModule("command/CommandManager"),
+        Menus            = brackets.getModule("command/Menus"),
+        Strings          = brackets.getModule("strings"),
+        AppInit          = brackets.getModule("utils/AppInit"),
+        ExtensionUtils   = brackets.getModule("utils/ExtensionUtils"),
+        FileUtils        = brackets.getModule("file/FileUtils"),
+        NativeFileSystem = brackets.getModule("file/NativeFileSystem").NativeFileSystem,
+        StringUtils      = brackets.getModule("utils/StringUtils"),
+        StringMatch      = brackets.getModule("utils/StringMatch"),
+        LanguageManager  = brackets.getModule("language/LanguageManager"),
+        HintUtils        = require("HintUtils"),
+        ScopeManager     = require("ScopeManager"),
+        Session          = require("Session"),
+        Acorn            = require("thirdparty/acorn/acorn");
 
     var KeyboardPrefs = JSON.parse(require("text!keyboard.json"));
 
@@ -526,9 +528,17 @@ define(function (require, exports, module) {
                         if (jumpResp.resultFile !== jumpResp.file) {
                             var resolvedPath = ScopeManager.getResolvedPath(jumpResp.resultFile);
                             if (resolvedPath) {
-                                CommandManager.execute(Commands.FILE_OPEN, {fullPath: resolvedPath})
-                                    .done(function () {
+                                DocumentManager.getDocumentForPath(resolvedPath)
+                                    .done(function (doc) {
+                                        DocumentManager.setCurrentDocument(doc);
                                         session.editor.setSelection(jumpResp.start, jumpResp.end, true);
+                                    })
+                                    .fail(function (fileError) {
+                                        FileUtils.showFileOpenError(fileError.name, resolvedPath).done(function () {
+                                            // For performance, we do lazy checking of file existence, so it may be in working set
+                                            DocumentManager.removeFromWorkingSet(new NativeFileSystem.FileEntry(resolvedPath));
+                                            EditorManager.focusEditor();
+                                        });
                                     });
                             }
                         } else {
