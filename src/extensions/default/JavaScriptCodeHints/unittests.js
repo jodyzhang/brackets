@@ -1097,10 +1097,10 @@ define(function (require, exports, module) {
             });
 
             it("basic codehints in html file", function () {
-                var start = { line: 30, ch: 9 },
-                    end   = { line: 30, ch: 11 };
+                var start = { line: 36, ch: 9 },
+                    end   = { line: 36, ch: 13};
                 
-                testDoc.replaceRange("x.", start, start);
+                testDoc.replaceRange("x100.", start);
                 testEditor.setCursorPos(end);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 runs(function () {
@@ -1109,7 +1109,7 @@ define(function (require, exports, module) {
             });
 
             it("function type hint in html file", function () {
-                var start = { line: 29, ch: 12 };
+                var start = { line: 35, ch: 12 };
                 
                 testEditor.setCursorPos(start);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
@@ -1117,15 +1117,92 @@ define(function (require, exports, module) {
                     hintsPresentExact(hintObj, ["foo(a: number) -> string"]);
                 });
             });
+            
+            it("should show function type code hint for function in script file inside html file", function () {
+                var start = { line: 22, ch: 17 };
+                
+                testEditor.setCursorPos(start);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["funD(a: string, b:number) ->{x, y}"]);
+                });
+            });
 
-            it("jump-to-def in html file", function () {
-                var start = { line: 29, ch: 10 };
+            it("should show function type code hint for function in another script file inside html file", function () {
+                var start = { line: 23, ch: 17 };
+                
+                testEditor.setCursorPos(start);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresentExact(hintObj, ["funE(paramE1:? , paramE2: ?)"]);
+                });
+            });
+
+            it("should show global variable in another script file inside html file", function () {
+                var start        = { line: 27, ch: 8 },
+                    end          = { line: 27, ch: 13},
+                    testPosStart = { line: 27, ch: 11},
+                    testPosEnd   = { line: 27, ch: 21};
+                
+                testDoc.replaceRange("arr.m", start);
+                
+                testEditor.setCursorPos(end);
+                var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                runs(function () {
+                    hintsPresent(hintObj, ["my-key"]);
+                });
+                selectHint(JSCodeHints.jsHintProvider, hintObj, "my-key");
+                runs(function () {
+                    expect(testDoc.getRange(testPosStart, testPosEnd)).toEqual("[\"my-key\"]");
+                });
+            });
+            
+            it("should jump to definition inside html file", function () {
+                var start = { line: 35, ch: 10 };
                 
                 testEditor.setCursorPos(start);
                 runs(function () {
-                    editorJumped({line: 18, ch: 20});
+                    editorJumped({line: 19, ch: 20});
                 });
             });
+            
+            it("should jump to funtion definition to loaded file1", function () {
+                var start = { line: 22, ch: 15 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 34, ch: 13});
+                });
+            });
+
+            it("should jump to funtion definition to loaded file2", function () {
+                var start = { line: 23, ch: 15 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 7, ch: 13});
+                });
+            });
+            
+            it("should jump to property definition to loaded file1", function () {
+                var start = { line: 23, ch: 28 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 4, ch: 16});
+                });
+            });
+            
+            it("should jump to property definition to loaded file2", function () {
+                var start = { line: 23, ch: 18 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 3, ch: 6});
+                });
+            });
+            
+            
         });
 
         describe("JavaScript Code Hinting without modules", function () {
