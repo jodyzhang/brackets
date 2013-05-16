@@ -1097,8 +1097,8 @@ define(function (require, exports, module) {
             });
 
             it("basic codehints in html file", function () {
-                var start = { line: 36, ch: 9 },
-                    end   = { line: 36, ch: 13};
+                var start = { line: 37, ch: 9 },
+                    end   = { line: 37, ch: 13};
                 
                 testDoc.replaceRange("x100.", start);
                 testEditor.setCursorPos(end);
@@ -1109,7 +1109,7 @@ define(function (require, exports, module) {
             });
 
             it("function type hint in html file", function () {
-                var start = { line: 35, ch: 12 };
+                var start = { line: 36, ch: 12 };
                 
                 testEditor.setCursorPos(start);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
@@ -1124,7 +1124,7 @@ define(function (require, exports, module) {
                 testEditor.setCursorPos(start);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 runs(function () {
-                    hintsPresentExact(hintObj, ["funD(a: string, b:number) ->{x, y}"]);
+                    hintsPresentExact(hintObj, ["funD(a: string, b: number) -> {x, y}"]);
                 });
             });
 
@@ -1134,7 +1134,7 @@ define(function (require, exports, module) {
                 testEditor.setCursorPos(start);
                 var hintObj = expectHints(JSCodeHints.jsHintProvider);
                 runs(function () {
-                    hintsPresentExact(hintObj, ["funE(paramE1:? , paramE2: ?)"]);
+                    hintsPresentExact(hintObj, ["funE(paramE1: D1, paramE2: number)"]);
                 });
             });
 
@@ -1158,7 +1158,7 @@ define(function (require, exports, module) {
             });
             
             it("should jump to definition inside html file", function () {
-                var start = { line: 35, ch: 10 };
+                var start = { line: 36, ch: 10 };
                 
                 testEditor.setCursorPos(start);
                 runs(function () {
@@ -1171,7 +1171,7 @@ define(function (require, exports, module) {
                 
                 testEditor.setCursorPos(start);
                 runs(function () {
-                    editorJumped({line: 34, ch: 13});
+                    editorJumped({line: 33, ch: 13});
                 });
             });
 
@@ -1180,7 +1180,7 @@ define(function (require, exports, module) {
                 
                 testEditor.setCursorPos(start);
                 runs(function () {
-                    editorJumped({line: 7, ch: 13});
+                    editorJumped({line: 6, ch: 13});
                 });
             });
             
@@ -1227,6 +1227,107 @@ define(function (require, exports, module) {
                 });
             });
         });
- 
+
+        describe("JavaScript Code Hinting with modules", function () {
+            var testPath = extensionPath + "/unittest-files/module-test-files/module_tests.js";
+
+            beforeEach(function () {
+                setupTest(testPath, true);
+            });
+
+            afterEach(function () {
+                tearDownTest();
+            });
+
+            it("should read methods created in submodule on this", function () {
+                var start = { line: 8, ch: 17 };
+
+                runs(function () {
+                    testEditor.setCursorPos(start);
+                    var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                    hintsPresentExact(hintObj, ["addMessage", "name", "privilegedMethod", "publicMethod1"]);
+                });
+            });
+            it("should read methods created in submodule", function () {
+                var start = { line: 19, ch: 15 };
+
+                runs(function () {
+                    testEditor.setCursorPos(start);
+                    var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                    hintsPresentExact(hintObj, ["addMessage", "name", "privilegedMethod", "publicMethod1"]);
+                });
+            });
+            
+            it("should read properties created in parent module", function () {
+                var start        = { line: 30, ch: 8 },
+                    testPos          = { line: 30, ch: 15};
+                
+                testDoc.replaceRange("parent.", start);
+                runs(function () {
+                    testEditor.setCursorPos(testPos);
+                    var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                    hintsPresentExact(hintObj, ["addMessage", "name", "privilegedMethod", "publicMethod1"]);
+                });
+            });
+            // bug: wait for tern 
+            xit("should read methods created in submodule module", function () {
+                var start        = { line: 62, ch: 0 },
+                    testPos          = { line: 62, ch: 13};
+                
+                testDoc.replaceRange("SearchEngine.", start);
+                runs(function () {
+                    testEditor.setCursorPos(testPos);
+                    var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                    hintsPresentExact(hintObj, ["getYourLuckyNumber", "subSearch"]);
+                });
+            });
+            
+            it("should read methods created in parent module", function () {
+                var start        = { line: 78, ch: 41 };
+                
+                runs(function () {
+                    testEditor.setCursorPos(start);
+                    var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                    hintsPresentExact(hintObj, ["getYourLuckyNumber", "subSearch"]);
+                });
+            });
+
+            it("should load module by file path from require", function () {
+                var start        = { line: 88, ch: 20 };
+                
+                runs(function () {
+                    testEditor.setCursorPos(start);
+                    var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                    hintsPresentExact(hintObj, ["color", "material", "size"]);
+                });
+            });
+            // tern bug: https://github.com/marijnh/tern/issues/147
+            xit("should read properties from exported module", function () {
+                var start        = { line: 96, ch: 0 },
+                    testPos          = { line: 96, ch: 9};
+                
+                testDoc.replaceRange("hondaCar.", start);
+                runs(function () {
+                    testEditor.setCursorPos(testPos);
+                    var hintObj = expectHints(JSCodeHints.jsHintProvider);
+                    hintsPresentExact(hintObj, ["model", "name"]);
+                });
+            });
+            
+            // bug in test framework? can't run sequencial jump, verification is wrong 
+            xit("should jump to a module, depending module", function () {
+                var start        = { line: 93, ch: 25 },
+                    testPos      = { line: 8, ch: 35 };
+                
+                testEditor.setCursorPos(start);
+                runs(function () {
+                    editorJumped({line: 5, ch: 23});
+                });
+                testEditor.setCursorPos(testPos);
+                runs(function () {
+                    editorJumped({line: 5, ch: 23});
+                });
+            });
+        });
     });
 });
